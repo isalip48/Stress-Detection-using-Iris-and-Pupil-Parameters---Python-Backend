@@ -199,29 +199,18 @@ def detect_eye_grayscale(image_path: str, config: dict) -> Dict:
                 config_used = "RESCUE"
                 print(f"   ✅ Iris rescued with RESCUE!")
 
-                # Final validation
-            pupil_detected = pupil_x is not None
-            iris_detected = iris_x is not None
-
-            if not pupil_detected and not iris_detected:
-                return {
-                    'success': False,
-                    'error': "Pupil and iris detection failed (all tiers exhausted)",
-                    'pupil_detected': False,
-                    'iris_detected': False
-                }
-
-            # Allow pupil-only success (iris can be missing)
-            result = {
-                'success': True,
-                'pupil': (pupil_x, pupil_y, pupil_radius) if pupil_detected else None,
-                'iris': (iris_x, iris_y, iris_radius) if iris_detected else None,
-                'image': image,
-                'pupil_detected': pupil_detected,
-                'iris_detected': iris_detected,
+        # Final validation
+        if pupil_x is None:
+            return {
+                'success': False,
+                'error': "Pupil detection failed (all tiers exhausted)"
             }
 
-            return result
+        if iris_x is None:
+            return {
+                'success': False,
+                'error': "Iris detection failed (all tiers exhausted)"
+            }
         
         print(f"   🎯 Detection successful using {config_used} config!")
         
