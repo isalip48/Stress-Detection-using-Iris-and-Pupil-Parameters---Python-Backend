@@ -154,62 +154,64 @@ def run_detection(image_path: str) -> Dict:
     return result
 
 
-def run_measurements(detection_result: Dict) -> Dict:
+def run_measurements(detection_result):
     """
-    Measure pupil diameter and count tension rings.
-    
-    Parameters:
-    -----------
-    detection_result : dict
-        Output from run_detection()
-    
-    Returns:
-    --------
-    dict: Measurement results containing:
-        - 'pupil_diameter_mm': float
-        - 'ring_count': int
-        - 'pixels_per_mm': float
-        - 'measurements_valid': bool
+    Safe version: supports pupil-only detection.
+    If iris is missing:
+        - ring_count = 0
+        - pupil_mm cannot be calculated (returns None)
+        - measurements_valid = False
     """
-    if not detection_result['success']:
+    pupil = detection_result.get('pupil')
+    iris = detection_result.get('iris')
+    image = detection_result.get('image')
+
+    # No pupil -> cannot continue
+    if pupil is None:
         return {
             'pupil_diameter_mm': None,
             'ring_count': None,
             'pixels_per_mm': None,
             'measurements_valid': False,
-            'error': 'Detection failed'
+            'error': 'Pupil not detected'
         }
-    
-    try:
-        # Extract detection results
-        pupil_center, pupil_radius = detection_result['pupil']
-        iris_center, iris_radius = detection_result['iris']
-        image = detection_result['image']
-        
-        # Measure pupil diameter
-        pupil_px, pupil_mm, px_per_mm = measure_pupil_diameter(pupil_radius, iris_radius)
+
+    pupil_center, pupil_radius = pupil
+
+    # -------------------------
+    # Case A: BOTH pupil + iris available
+    # -------------------------
+    if iris is not None:
+        iris_center, iris_radius = iris
+
+        pupil_px, pupil_mm, px_per_mm = measure_pupil_diameter(
+            pupil_radius, iris_radius
+        )
+        ring_count = count_tension_rings(
+            image, pupil_center, pupil_radius,
+            iris_center, iris_radius
+        )
+
         is_valid, validation_msg = validate_pupil_measurement(pupil_mm)
-        
-        # Count tension rings
-        ring_count = count_tension_rings(image, pupil_center, pupil_radius, iris_center, iris_radius)
-        
+
         return {
             'pupil_diameter_mm': pupil_mm,
-            'pupil_diameter_px': pupil_px,
             'ring_count': ring_count,
             'pixels_per_mm': px_per_mm,
             'measurements_valid': is_valid,
-            'validation_message': validation_msg
+            'warning': validation_msg
         }
-    
-    except Exception as e:
-        print(f"❌ Measurement error: {e}")
+
+    # -------------------------
+    # Case B: ONLY pupil detected (iris missing)
+    # -------------------------
+    else:
         return {
-            'pupil_diameter_mm': None,
-            'ring_count': None,
+            'pupil_diameter_mm': None,   # cannot compute without iris ratio
+            'ring_count': 0,             # no iris → no valid ring detection
             'pixels_per_mm': None,
-            'measurements_valid': False,
-            'error': str(e)
+            'measurements_valid': False, # still allows model to run!
+            'warning': 'Iris not detected; using pupil-only detection mode.'
         }
 
 
