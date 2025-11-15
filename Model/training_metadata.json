@@ -1,0 +1,56 @@
+{
+    "model_info": {
+        "name": "Dual-Stream Age-Aware Iris Stress Detection",
+        "architecture": "Dual CNN streams with learnable fusion (WeightedFeatureFusion)",
+        "input_streams": [
+            "Pupil (RGB 5-channel)",
+            "Iris (5-channel)",
+            "Age (8 groups)",
+            "Iris Ring Count"
+        ],
+        "total_parameters": 486772,
+        "training_date": "2025-11-11 22:00:55"
+    },
+    "dataset_info": {
+        "pupil_total": 2504,
+        "iris_total": 1191,
+        "train_samples": 1388,
+        "val_samples": 850,
+        "test_samples": 266,
+        "original_ratio": "945:443",
+        "augmented_ratio": "945:664"
+    },
+    "training_config": {
+        "batch_size": 32,
+        "epochs": 50,
+        "initial_learning_rate": 1e-06,
+        "peak_learning_rate": 5e-05,
+        "warmup_epochs": 5,
+        "focal_loss_alpha": 0.5,
+        "focal_loss_gamma": 2.0,
+        "pupil_augment_multiplier": 1.5,
+        "iris_augment_stressed": 2,
+        "early_stopping_patience": 15,
+        "split_strategy": "70-20-10 Stratified"
+    },
+    "test_results": {
+        "test_loss": 0.12062154710292816,
+        "test_accuracy": 0.9412124752998352,
+        "test_auc": 0.9849603772163391,
+        "test_auc_pr": 0.9814902544021606,
+        "optimal_threshold": 0.4497587978839874
+    },
+    "alpha_analysis": {
+        "mean_alpha": 0.8170936703681946,
+        "std_alpha": 0.07743758708238602,
+        "interpretation": "Iris-weighted"
+    },
+    "novelties": {
+        "learnable_alpha_fusion": "WeightedFeatureFusion with gating network",
+        "age_aware_architecture": "Age features injected into pupil stream before fusion",
+        "5_channel_features": "RGB + Canny edges + BlackHat morphology",
+        "attention_mechanisms": "EdgeAttentionModule + FeatureAttentionModule",
+        "iris_ring_count_input": "Tension ring count as additional iris feature",
+        "focal_loss": "Class imbalance handled by Focal Loss (no class weights)"
+    }
+}
