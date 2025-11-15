@@ -173,9 +173,9 @@ def predict():
             # Get more specific error from detection
             if 'detection' in results and not results['detection'].get('success'):
                 detection = results['detection']
-                if detection.get('pupil_detected') == False:
+                if not detection.get('pupil_detected'):
                     error_msg = "Pupil detection failed. Please ensure the image clearly shows the pupil."
-                elif detection.get('iris_detected') == False:
+                elif not detection.get('iris_detected'):
                     error_msg = "Iris detection failed. Please ensure the image clearly shows the iris."
                 else:
                     error_msg = detection.get('error', 'Detection failed')
